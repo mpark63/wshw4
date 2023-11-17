@@ -31,13 +31,14 @@ export const takeScreenshot = () => {
   //   curr = res;
   //   showDiff()
   // })
-  html2canvas(document.body, { allowTaint: true, foreignObjectRendering: true })
-    .then((res) => {
-      curr = res.toDataURL('image/png');
-      img.src = diff
-      showDiff()
-    })
-    .catch((err) => console.log(err)); 
+
+//   html2canvas(document.body, { allowTaint: true, foreignObjectRendering: true })
+//     .then((res) => {
+//       curr = res.toDataURL('image/png');
+//       img.src = diff
+//       showDiff()
+//     })
+//     .catch((err) => console.log(err)); 
 }
 
 function getDiffImg() {
@@ -64,11 +65,11 @@ function showDiff() {
 
   if (prev === null && curr === null) {
     console.log('err: no screenshot taken yet')
-    setTimeout(() => takeScreenshot(), 3000)
+    // setTimeout(() => takeScreenshot(), 3000)
   } else if (prev === null && curr !== null) {
     console.log('first screenshot')
     img.src = curr
-    setTimeout(() => takeScreenshot(), 3000)
+    // setTimeout(() => takeScreenshot(), 3000)
   } else {
     console.log('difference taken')
     resemble(prev)
@@ -76,9 +77,16 @@ function showDiff() {
       .onComplete(async function (respData) {
         diff = respData.getImageDataUrl();
         img.src = diff
-        setTimeout(() => takeScreenshot(), 3000)
+        // setTimeout(() => takeScreenshot(), 3000)
       });
   }
 }
 
-window.onfocus = takeScreenshot;
+// window.onfocus = takeScreenshot;
+
+chrome.runtime.onMessage.addListener(function (req, sender, res) {
+  if (req.type === 'screenshot') {
+    curr = req.data
+    showDiff()
+  }
+})
