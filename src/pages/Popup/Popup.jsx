@@ -1,27 +1,28 @@
-import React from 'react';
-import logo from '../../assets/img/logo.svg';
-import Greetings from '../../containers/Greetings/Greetings';
+import React, { useEffect, useState } from "react"
 import './Popup.css';
 
+// communicate with content with chrome.tabs.sendMessage
+
 const Popup = () => {
+  const [count, setCount] = useState(42)
+  const [currentDiff, setCurrentDiff] = useState('')
+  const [currentURL, setCurrentURL] = useState()
+  const [currentId, setCurrentId] = useState()
+    
+  useEffect(() => {
+    chrome.action.setBadgeText({ text: count.toString() })
+  }, [count])
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/pages/Popup/Popup.jsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React!
-        </a>
-      </header>
-    </div>
-  );
-};
+    <>
+      <ul style={{ minWidth: "700px" }}>
+        <li>Current URL: {currentURL}</li>
+        <li>Current Time: {new Date().toLocaleTimeString()}</li>
+      </ul>
+      <p>Screenshot: {currentId} </p>
+      <img src={currentDiff} height="400" alt="diff"/>
+    </>
+  )
+}
 
 export default Popup;
