@@ -4,22 +4,32 @@ import './Popup.css';
 // communicate with content with chrome.tabs.sendMessage
 
 const Popup = () => {
-  const [count, setCount] = useState(42)
+  const [mismatch, setMismatch] = useState('0')
   const [currentDiff, setCurrentDiff] = useState('')
-  const [currentURL, setCurrentURL] = useState()
-  const [currentId, setCurrentId] = useState()
     
   useEffect(() => {
-    chrome.action.setBadgeText({ text: count.toString() })
-  }, [count])
+    chrome.runtime.sendMessage({
+      type: 'popup',
+      keyword: 'please'
+    });
+
+    chrome.runtime.onMessage.addListener((response, sender, sendResponse) => {
+      if (response.type === 'diff report') {
+        // Update the state with the received diff report
+        console.log('received diff report')
+        setMismatch(response.percentage);
+        setCurrentDiff(response.img);
+        chrome.action.setBadgeText({ text: mismatch });
+      }
+    });
+  }, [])
   
   return (
     <>
       <ul style={{ minWidth: "700px" }}>
-        <li>Current URL: {currentURL}</li>
-        <li>Current Time: {new Date().toLocaleTimeString()}</li>
+        <li>Current mismatch: {mismatch}</li>
       </ul>
-      <p>Screenshot: {currentId} </p>
+      <p>Screenshot:</p>
       <img src={currentDiff} height="400" alt="diff"/>
     </>
   )

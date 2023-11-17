@@ -6,6 +6,8 @@ import html2canvas from 'html2canvas';
 let prev = null; 
 let curr = null; 
 let diff = null; 
+let diffData = { misMatchPercentage: '?', img: null }; 
+let onTab = true; 
 
 // set resemble settings for diff in red 
 resemble.outputSettings({
@@ -34,8 +36,9 @@ export const takeScreenshot = () => {
   html2canvas(document.body, { allowTaint: true, foreignObjectRendering: true })
     .then((res) => {
       curr = res.toDataURL('image/png');
-      img.src = diff
-      showDiff()
+      if (prev === null && curr !== null) console.log('first screenshot taken')
+      calculateDiff()
+      if (onTab) setTimeout(() => takeScreenshot(), 3000)
     })
     .catch((err) => console.log(err)); 
 }
@@ -59,26 +62,75 @@ function getDiffImg() {
 }
 
 // change html in response to message 
-function showDiff() {
-  let img = getDiffImg()
-
+function calculateDiff() {
   if (prev === null && curr === null) {
     console.log('err: no screenshot taken yet')
-    setTimeout(() => takeScreenshot(), 3000)
-  } else if (prev === null && curr !== null) {
-    console.log('first screenshot')
-    img.src = curr
-    setTimeout(() => takeScreenshot(), 3000)
-  } else {
-    console.log('difference taken')
+  } else if (prev !== null && curr !== null) {
     resemble(prev)
-      .compareTo(curr)
-      .onComplete(async function (respData) {
-        diff = respData.getImageDataUrl();
-        img.src = diff
-        setTimeout(() => takeScreenshot(), 3000)
+    .compareTo(curr)
+    .onComplete(async function (data) {
+        diffData = data; 
+        diff = data.getImageDataUrl();
+        // setTimeout(() => takeScreenshot(), 3000)
       });
-  }
+  } 
 }
+
+export function sendDiffReport() {
+  chrome.runtime.sendMessage({
+    type: 'diff report',
+    percentage: diffData.misMatchPercentage,
+    img: diff
+  });
+}
+
+function openNewTab() {
+  console.log('opening new tab')
+  const viewTabUrl = chrome.runtime.getURL('newtab.html');
+  let targetId = null;
+  chrome.action.onClicked.addListener(async function () {
+
+    chrome.tabs.onUpdated.addListener(function listener(tabId, changedProps) {
+      // We are waiting for the tab we opened to finish loading.
+      // Check that the tab's id matches the tab we opened,
+      // and that the tab is done loading.
+      if (tabId !== targetId || changedProps.status !== 'complete') return;
+
+      // Passing the above test means this is the event we were waiting for.
+      // There is nothing we need to do for future onUpdated events, so we
+      // use removeListner to stop getting called when onUpdated events fire.
+      chrome.tabs.onUpdated.removeListener(listener);
+
+      // Send screenshotUrl to the tab.
+      chrome.tabs.sendMessage(tabId, { msg: 'screenshot', data: diff });
+    });
+
+    const tab = await chrome.tabs.create({ url: viewTabUrl });
+    targetId = tab.id;
+  })
+}
+
+
+// Listen for visibility change events
+document.addEventListener('visibilitychange', function() {
+  // Check if the page is hidden
+  onTab = !document.hidden;
+
+  if (onTab) {
+    console.log('hi')
+    takeScreenshot();
+
+    if (diffData !== null) {
+      // alert to popup 
+      console.log(diffData)
+      sendDiffReport()
+      console.log('before openNewTab')
+      openNewTab()
+      console.log('after openNewTab')
+    }
+  } else {
+    console.log('bye')
+  }
+});
 
 window.onfocus = takeScreenshot;
