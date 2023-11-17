@@ -1,26 +1,35 @@
 import React, { useEffect, useState } from "react"
 import './Popup.css';
 
-// communicate with content with chrome.tabs.sendMessage
-
 const Popup = () => {
-  const [count, setCount] = useState(42)
-  const [currentDiff, setCurrentDiff] = useState('')
-  const [currentURL, setCurrentURL] = useState()
-  const [currentId, setCurrentId] = useState()
+  const [diffPercent, setDiffPercent] = useState(localStorage.getItem('diffPercent') || '')
+  const [diffImg, setDiffImg] = useState(localStorage.getItem('diff') || '')
     
   useEffect(() => {
-    chrome.action.setBadgeText({ text: count.toString() })
-  }, [count])
+    chrome.action.setBadgeText({ text: diffPercent })
+  }, [diffPercent])
+
+  useEffect(() => {
+    // GOAL: RESPOND TO DIFF REPORT AND UPDATE POPUP
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      // popup to background script
+      chrome.runtime.sendMessage({ tabId: tabs[0].id,  type: 'start' });
+    });
+  
+    chrome.runtime.onMessage.addListener(function (request) {
+      if (request.type === 'diff report') {
+        setDiffPercent(localStorage.getItem('diffPercent'))
+        setDiffImg(localStorage.getItem('diffImg'))
+      }
+    });
+  },[])
   
   return (
     <>
       <ul style={{ minWidth: "700px" }}>
-        <li>Current URL: {currentURL}</li>
-        <li>Current Time: {new Date().toLocaleTimeString()}</li>
+        <li>Mismatch percentage: {diffPercent}</li>
       </ul>
-      <p>Screenshot: {currentId} </p>
-      <img src={currentDiff} height="400" alt="diff"/>
+      <img src={diffImg} height="400" alt="diff"/>
     </>
   )
 }
