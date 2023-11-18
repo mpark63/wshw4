@@ -21,4 +21,6 @@ Rhe content script start calling the `takeScreenshot` function as soon as the pa
 This is a script that communicates with the content script. Upon receiving the `screenshot request` message from content script, it emits a `screenshot response` with the result of `chrome.tabs.captureVisibleTab`. 
 
 ## Examples
-TBD
+<img width="1470" alt="Screenshot 2023-11-17 at 8 28 54 PM" src="https://github.com/mpark63/wshw4/assets/90944895/1329de8c-20aa-45de-bb38-fc791c3ac2f1">
+<img width="1470" alt="Screenshot 2023-11-17 at 9 58 05 PM" src="https://github.com/mpark63/wshw4/assets/90944895/30bdb92b-f473-4403-b055-37130aa564fc">
+
