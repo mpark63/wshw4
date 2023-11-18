@@ -4,33 +4,34 @@ import './Popup.css';
 // communicate with content with chrome.tabs.sendMessage
 
 const Popup = () => {
-  const [mismatch, setMismatch] = useState('0')
-  const [currentDiff, setCurrentDiff] = useState('')
-    
-  useEffect(() => {
-    chrome.runtime.sendMessage({
-      type: 'popup',
-      keyword: 'please'
-    });
+  const [mismatch, setMismatch] = useState(0)
+  const [tabId, setTabId] = useState('')
 
-    chrome.runtime.onMessage.addListener((response, sender, sendResponse) => {
-      if (response.type === 'diff report') {
-        // Update the state with the received diff report
-        console.log('received diff report')
-        setMismatch(response.percentage);
-        setCurrentDiff(response.img);
-        chrome.action.setBadgeText({ text: mismatch });
-      }
+  function clearDiff() {
+    setMismatch(0);
+    chrome.tabs.sendMessage(tabId, { type: 'clear' });
+  }
+
+  useEffect(() => {
+    chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+      setTabId(tabs[0].id);
     });
-  }, [])
+  }, []);
+    
+  chrome.runtime.onMessage.addListener((response, sender, sendResponse) => {
+    if (response.type === 'diff report') {
+      // Update the state with the received diff report
+      setMismatch(response.percent)
+      chrome.action.setBadgeText({ text: Math.floor(response.percent) });
+    }
+  });
   
   return (
     <>
       <ul style={{ minWidth: "700px" }}>
         <li>Current mismatch: {mismatch}</li>
       </ul>
-      <p>Screenshot:</p>
-      <img src={currentDiff} height="400" alt="diff"/>
+      <button onClick={() => clearDiff}>clear diff</button>
     </>
   )
 }
