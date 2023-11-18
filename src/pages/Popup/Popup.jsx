@@ -17,12 +17,15 @@ const Popup = () => {
       setTabId(tabs[0].id);
     });
   }, []);
+
+  useEffect(() => {
+    chrome.action.setBadgeText({ text: Math.floor(mismatch).toString() });
+  }, [mismatch]);
     
-  chrome.runtime.onMessage.addListener((response, sender, sendResponse) => {
-    if (response.type === 'diff report') {
+  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    if (request.type === 'diff report') {
       // Update the state with the received diff report
-      setMismatch(response.percent)
-      chrome.action.setBadgeText({ text: Math.floor(response.percent) });
+      setMismatch(request.percent)
     }
   });
   
@@ -31,7 +34,7 @@ const Popup = () => {
       <ul style={{ minWidth: "700px" }}>
         <li>Current mismatch: {mismatch}</li>
       </ul>
-      <button onClick={() => clearDiff}>clear diff</button>
+      <button onClick={() => clearDiff()}>clear diff</button>
     </>
   )
 }

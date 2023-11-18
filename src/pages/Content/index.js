@@ -11,9 +11,9 @@ let onTab = true;
 // set resemble settings for diff in red 
 resemble.outputSettings({
   errorColor: {
-      red: 220,
-      green: 20,
-      blue: 0
+		red: 220,
+		green: 20,
+		blue: 0
   },
   errorType: "movement",
   transparency: 0.3,
@@ -22,15 +22,14 @@ resemble.outputSettings({
 });
 
 // take a screenshot of current tab 
-const takeScreenshot = () => {
+function takeScreenshot() {
 	if (percent > 0) return; 
-	console.log('takeScreenshot')
+console.log('takeScreenshot')
   
-  prev = curr; 
 	chrome.runtime.sendMessage({ type: 'screenshot request'})
 
 	if (onTab) {
-		setTimeout(takeScreenshot, 1000)
+		setTimeout(() => takeScreenshot(), 1000);
 	}
 }
 
@@ -69,7 +68,7 @@ function calculateDiff() {
 function sendDiffReport() {
   chrome.runtime.sendMessage({
     type: 'diff report',
-    percent: percent,
+    percent: percent
   });
 }
 
@@ -81,10 +80,12 @@ document.addEventListener('visibilitychange', function() {
   if (onTab) {
     console.log('hi')
     takeScreenshot();
+		calculateDiff();
 		if (percent > 0) {
+			console.log('mismatch:', percent)
+			sendDiffReport()
 			const diffImg = getDiffImg()
 			diffImg.src = diff
-			sendDiffReport()
 		}
   } else {
     console.log('bye')
@@ -92,16 +93,17 @@ document.addEventListener('visibilitychange', function() {
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-	console.log(request.type);
 	if (request.type === 'clear') {
 		const img = getDiffImg()
 		percent = 0
     diff = null;
     img.src = '';
+		takeScreenshot();
   } else if (request.type === 'screenshot response') {
+		prev = curr; 
 		curr = request.data;
-		calculateDiff();
 	}
 });
 
-window.onfocus = takeScreenshot;
+window.onload = () => takeScreenshot();
+document.onload = () => takeScreenshot();
