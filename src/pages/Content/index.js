@@ -24,7 +24,6 @@ resemble.outputSettings({
 // take a screenshot of current tab 
 function takeScreenshot() {
 	if (percent > 0) return; 
-console.log('takeScreenshot')
   
 	chrome.runtime.sendMessage({ type: 'screenshot request'})
 
